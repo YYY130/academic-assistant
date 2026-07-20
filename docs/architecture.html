@@ -1,0 +1,208 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Academic Assistant — 系统架构图</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f8fafc;
+    --fg: #172033;
+    --muted: #5b6475;
+    --line: #64748b;
+    --neutral: #e2e8f0;
+    --input: #bfdbfe;
+    --process: #c7d2fe;
+    --storage: #99f6e4;
+    --external: #fde68a;
+    --risk: #fecaca;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a;
+      --fg: #e5e7eb;
+      --muted: #a3adbd;
+      --line: #94a3b8;
+      --neutral: #334155;
+      --input: #1d4ed8;
+      --process: #4338ca;
+      --storage: #0f766e;
+      --external: #92400e;
+      --risk: #991b1b;
+    }
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  main {
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 20px;
+  }
+  svg { width: 100%; height: auto; display: block; }
+  .title { font-size: 20px; font-weight: 650; fill: var(--fg); }
+  .label { font-size: 13px; font-weight: 600; fill: var(--fg); }
+  .small { font-size: 11px; fill: var(--muted); }
+  .node { stroke: var(--line); stroke-width: 1.2; rx: 6; ry: 6; }
+  .zone-label { font-size: 11px; font-weight: 600; fill: var(--muted); letter-spacing: 1px; }
+  .neutral { fill: var(--neutral); }
+  .input { fill: var(--input); }
+  .process { fill: var(--process); }
+  .storage { fill: var(--storage); }
+  .external { fill: var(--external); }
+  .risk { fill: var(--risk); }
+  .edge { stroke: var(--line); stroke-width: 1.5; fill: none; }
+  .edge-dashed { stroke: var(--line); stroke-width: 1.5; fill: none; stroke-dasharray: 6 4; }
+  .zone { fill: none; stroke: var(--line); stroke-width: 1; stroke-dasharray: 6 5; opacity: 0.6; }
+</style>
+<main>
+  <svg viewBox="0 0 1000 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Academic Assistant System Architecture">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--line)" />
+      </marker>
+      <marker id="arrow-dashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--line)" opacity="0.6" />
+      </marker>
+    </defs>
+
+    <!-- Title -->
+    <text x="20" y="30" class="title">Academic Assistant — 系统架构图</text>
+
+    <!-- ===== Zone: 用户层 ===== -->
+    <rect x="20" y="50" width="960" height="90" class="zone" />
+    <text x="30" y="68" class="zone-label">用户界面层</text>
+
+    <rect x="50" y="80" width="180" height="48" class="node input" />
+    <text x="140" y="108" class="label" text-anchor="middle">WebChat / Discord / Telegram</text>
+
+    <rect x="280" y="80" width="160" height="48" class="node input" />
+    <text x="360" y="108" class="label" text-anchor="middle">Web 前端 (浏览器)</text>
+
+    <rect x="490" y="80" width="140" height="48" class="node input" />
+    <text x="560" y="108" class="label" text-anchor="middle">CLI / API</text>
+
+    <!-- ===== Zone: Web 前端 ===== -->
+    <rect x="20" y="160" width="960" height="80" class="zone" />
+    <text x="30" y="178" class="zone-label">Web 服务层 (Flask)</text>
+
+    <rect x="280" y="185" width="300" height="42" class="node process" />
+    <text x="430" y="210" class="label" text-anchor="middle">web/server.py  Flask 服务</text>
+    <text x="430" y="222" class="small" text-anchor="middle">http://localhost:5000</text>
+
+    <!-- Arrow: browser → Flask -->
+    <path d="M 360 128 L 360 185" class="edge" marker-end="url(#arrow)" />
+
+    <!-- ===== Zone: OpenClaw Gateway ===== -->
+    <rect x="20" y="260" width="960" height="90" class="zone" />
+    <text x="30" y="278" class="zone-label">OpenClaw 网关层</text>
+
+    <rect x="200" y="290" width="200" height="48" class="node process" />
+    <text x="300" y="318" class="label" text-anchor="middle">OpenClaw Gateway</text>
+
+    <rect x="460" y="290" width="260" height="48" class="node process" />
+    <text x="590" y="310" class="label" text-anchor="middle">OpenAI 兼容 API 端点</text>
+    <text x="590" y="325" class="small" text-anchor="middle">/v1/chat/completions (port 18789)</text>
+
+    <!-- Arrow: Flask → Gateway -->
+    <path d="M 430 227 L 430 270 L 300 270 L 300 290" class="edge" marker-end="url(#arrow)" />
+
+    <!-- ===== Zone: Agent 层 ===== -->
+    <rect x="20" y="370" width="960" height="230" class="zone" />
+    <text x="30" y="388" class="zone-label">AI 智能体层 (9 个 Agent)</text>
+
+    <!-- Main Agent -->
+    <rect x="400" y="400" width="200" height="48" class="node neutral" />
+    <text x="500" y="420" class="label" text-anchor="middle">🧑‍🔬 main_agent</text>
+    <text x="500" y="435" class="small" text-anchor="middle">Pro · 意图识别 · 全局调度</text>
+
+    <!-- Arrow: Gateway → Main Agent -->
+    <path d="M 500 338 L 500 400" class="edge" marker-end="url(#arrow)" />
+
+    <!-- Sub-agents row 1 -->
+    <rect x="50" y="470" width="150" height="42" class="node process" />
+    <text x="125" y="490" class="label" text-anchor="middle">reading_orchestrator</text>
+    <text x="125" y="504" class="small" text-anchor="middle">Flash · 管线调度</text>
+
+    <rect x="230" y="470" width="150" height="42" class="node process" />
+    <text x="305" y="490" class="label" text-anchor="middle">personalized_recommender</text>
+    <text x="305" y="504" class="small" text-anchor="middle">Flash · 兴趣推荐</text>
+
+    <rect x="410" y="470" width="150" height="42" class="node process" />
+    <text x="485" y="490" class="label" text-anchor="middle">writing_agent</text>
+    <text x="485" y="504" class="small" text-anchor="middle">Pro · 学术写作</text>
+
+    <!-- Sub-agents row 2 (under orchestrator) -->
+    <rect x="50" y="535" width="130" height="38" class="node external" />
+    <text x="115" y="558" class="label" text-anchor="middle">search_agent</text>
+
+    <rect x="195" y="535" width="100" height="38" class="node external" />
+    <text x="245" y="558" class="label" text-anchor="middle">skim_agent</text>
+
+    <rect x="310" y="535" width="100" height="38" class="node external" />
+    <text x="360" y="558" class="label" text-anchor="middle">deep_read_agent</text>
+
+    <rect x="425" y="535" width="100" height="38" class="node external" />
+    <text x="475" y="558" class="label" text-anchor="middle">analysis_agent</text>
+
+    <rect x="540" y="535" width="100" height="38" class="node external" />
+    <text x="590" y="558" class="label" text-anchor="middle">association_agent</text>
+
+    <!-- Arrows: Main → Sub-agents -->
+    <path d="M 460 448 L 200 448 L 125 448 L 125 470" class="edge-dashed" marker-end="url(#arrow-dashed)" />
+    <path d="M 500 448 L 500 460 L 305 460 L 305 470" class="edge-dashed" marker-end="url(#arrow-dashed)" />
+    <path d="M 560 448 L 600 448 L 485 448 L 485 470" class="edge-dashed" marker-end="url(#arrow-dashed)" />
+
+    <!-- Arrows: Orchestrator → pipeline agents -->
+    <path d="M 100 512 L 100 520 L 115 520 L 115 535" class="edge" marker-end="url(#arrow)" />
+    <path d="M 140 512 L 245 535" class="edge" marker-end="url(#arrow)" />
+    <path d="M 160 512 L 360 535" class="edge" marker-end="url(#arrow)" />
+    <path d="M 175 512 L 475 535" class="edge" marker-end="url(#arrow)" />
+    <path d="M 190 512 L 590 535" class="edge" marker-end="url(#arrow)" />
+
+    <!-- ===== Zone: 数据层 ===== -->
+    <rect x="20" y="620" width="960" height="80" class="zone" />
+    <text x="30" y="638" class="zone-label">数据存储层</text>
+
+    <rect x="50" y="650" width="180" height="38" class="node storage" />
+    <text x="140" y="673" class="label" text-anchor="middle">DB A · 向量知识库</text>
+
+    <rect x="270" y="650" width="180" height="38" class="node storage" />
+    <text x="360" y="673" class="label" text-anchor="middle">DB B · 实验数据库</text>
+
+    <rect x="490" y="650" width="180" height="38" class="node storage" />
+    <text x="580" y="673" class="label" text-anchor="middle">knowledge_md · 文献库</text>
+
+    <rect x="710" y="650" width="180" height="38" class="node risk" />
+    <text x="800" y="666" class="label" text-anchor="middle">web/messages/</text>
+    <text x="800" y="680" class="small" text-anchor="middle">会话 JSON 存储</text>
+
+    <!-- Arrows: Agents → Data -->
+    <path d="M 590 573 L 140 640" class="edge-dashed" marker-end="url(#arrow-dashed)" />
+    <path d="M 485 512 L 360 640" class="edge-dashed" marker-end="url(#arrow-dashed)" />
+    <path d="M 50 470 L 30 470 L 30 620 L 580 620 L 580 650" class="edge-dashed" marker-end="url(#arrow-dashed)" />
+
+    <!-- Legend -->
+    <g transform="translate(740, 380)">
+      <text x="0" y="10" class="small" font-weight="600">图例</text>
+      <rect x="0" y="18" width="12" height="12" class="node input" />
+      <text x="18" y="28" class="small">用户界面</text>
+      <rect x="0" y="36" width="12" height="12" class="node process" />
+      <text x="18" y="46" class="small">服务/服务端</text>
+      <rect x="0" y="54" width="12" height="12" class="node neutral" />
+      <text x="18" y="64" class="small">主 Agent</text>
+      <rect x="0" y="72" width="12" height="12" class="node external" />
+      <text x="18" y="82" class="small">子 Agent</text>
+      <rect x="0" y="90" width="12" height="12" class="node storage" />
+      <text x="18" y="100" class="small">数据存储</text>
+      <rect x="0" y="108" width="12" height="12" class="node risk" />
+      <text x="18" y="118" class="small">临时存储</text>
+      <path d="M 0 130 L 16 130" class="edge" marker-end="url(#arrow)" />
+      <text x="18" y="134" class="small">数据流</text>
+      <path d="M 0 146 L 16 146" class="edge-dashed" marker-end="url(#arrow-dashed)" />
+      <text x="18" y="150" class="small">Agent Spawn</text>
+    </g>
+  </svg>
+</main>

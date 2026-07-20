@@ -173,6 +173,14 @@ python3 web/server.py
 python shared/scripts/store_to_db_a.py --action list
 ```
 
+## 📖 文档
+
+| 文档 | 说明 |
+|------|------|
+| [API 文档](docs/API.md) | Web 前端所有 API 接口参考 |
+| [系统架构图](docs/architecture.html) | 完整系统架构可视化（浏览器打开） |
+| [已知问题清单](docs/known-issues.md) | 当前版本已知限制与 Bug |
+
 ## 📁 项目结构
 
 ```
