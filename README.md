@@ -153,6 +153,7 @@ python3 web/server.py
 
 > Make sure OpenClaw gateway is running first (`openclaw gateway restart`).
 > The web interface connects to the gateway on port `18789`.
+> Open **http://localhost:5000/** in your browser after starting.
 
 ### Usage Examples
 
