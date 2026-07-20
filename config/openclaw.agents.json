@@ -1,0 +1,100 @@
+{
+  "agents": {
+    "defaults": {
+      "model": "deepseek/deepseek-v4-flash",
+      "userTimezone": "Asia/Shanghai",
+      "tools": {
+        "allow": ["read", "write", "edit", "apply_patch", "exec", "web_search", "web_fetch", "memory_search", "memory_get", "sessions_spawn", "sessions_send", "sessions_history", "session_status"]
+      }
+    },
+    "list": [
+      {
+        "id": "sciflow-main",
+        "name": "科研助手主Agent · SciFlow Main",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\main_agent",
+        "model": "deepseek/deepseek-v4-pro",
+        "default": true,
+        "identity": {
+          "name": "SciFlow",
+          "theme": "智研协同学术助手 · 全局调度中枢",
+          "emoji": "🎓🔬"
+        },
+        "subagents": {
+          "allowAgents": ["sciflow-reader", "sciflow-recommend", "sciflow-writer"],
+          "maxChildrenPerAgent": 3,
+          "maxSpawnDepth": 2
+        },
+        "tools": {
+          "allow": ["read", "write", "exec", "web_search", "web_fetch", "sessions_spawn", "sessions_send", "sessions_history", "memory_search", "memory_get", "message"]
+        }
+      },
+      {
+        "id": "sciflow-reader",
+        "name": "阅读编排器 · Reading Orchestrator",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\reading_orchestrator",
+        "subagents": {
+          "allowAgents": ["sciflow-search", "sciflow-skim", "sciflow-deepread", "sciflow-analyze", "sciflow-knowledge"],
+          "maxChildrenPerAgent": 5,
+          "maxSpawnDepth": 2
+        }
+      },
+      {
+        "id": "sciflow-search",
+        "name": "搜索Agent · Search",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\search_agent",
+        "tools": {
+          "allow": ["read", "write", "web_search", "web_fetch"]
+        }
+      },
+      {
+        "id": "sciflow-skim",
+        "name": "略读Agent · Skim",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\skim_agent",
+        "tools": {
+          "allow": ["read", "write"]
+        }
+      },
+      {
+        "id": "sciflow-deepread",
+        "name": "精读Agent · Deep Read",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\deep_read_agent",
+        "tools": {
+          "allow": ["read", "write", "web_fetch", "pdf"]
+        }
+      },
+      {
+        "id": "sciflow-analyze",
+        "name": "分析Agent · Analysis",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\analysis_agent",
+        "tools": {
+          "allow": ["read", "write"]
+        }
+      },
+      {
+        "id": "sciflow-knowledge",
+        "name": "知识关联Agent · Knowledge",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\association_agent",
+        "tools": {
+          "allow": ["read", "write", "exec"]
+        }
+      },
+      {
+        "id": "sciflow-recommend",
+        "name": "个性化推荐Agent · 知荐 (ZhiJian)",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\personalized_recommender",
+        "tools": {
+          "allow": ["read", "write", "exec", "memory_search", "memory_get"]
+        }
+      },
+      {
+        "id": "sciflow-writer",
+        "name": "写作协作Agent · Writing",
+        "workspace": "C:\\Users\\yuyue\\Desktop\\作业之类的\\龙虾实训\\结项作业\\academic-assistant\\agents-workspace\\writing_agent",
+        "model": "deepseek/deepseek-v4-pro",
+        "tools": {
+          "allow": ["read", "write", "exec", "web_search", "web_fetch"]
+        }
+      }
+    ]
+  }
+}

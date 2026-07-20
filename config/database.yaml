@@ -1,0 +1,18 @@
+# 数据库配置
+
+db_a:
+  type: vector_store
+  embedding_model: all-MiniLM-L6-v2
+  vector_dim: 384
+  similarity_metric: cosine
+  persist_dir: ./data/db_a
+  collection_name: paper_knowledge
+  retrieval:
+    default_top_k: 10
+    min_score: 0.5
+    hybrid_search: true
+
+db_b:
+  type: sqlite
+  path: ./data/db_b/experiments.db
+  auto_cleanup: true

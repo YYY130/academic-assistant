@@ -1,0 +1,26 @@
+# 默认全局配置
+project:
+  name: academic-assistant
+  version: 0.1.0
+
+models:
+  embedding:
+    name: all-MiniLM-L6-v2
+    device: cpu
+  llm:
+    default: deepseek/deepseek-v4-flash
+    reading: deepseek/deepseek-v4-pro
+    writing: deepseek/deepseek-v4-pro
+
+database:
+  db_a:
+    vector_dim: 384
+    collection: paper_knowledge
+    persist_dir: ./data/db_a
+  db_b:
+    type: sqlite
+    path: ./data/db_b/experiments.db
+
+logging:
+  level: INFO
+  file: ./logs/academic.log

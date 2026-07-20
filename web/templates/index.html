@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SciFlow 智研协同 · 学术助手</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f6f2; --surface: #ffffff; --text: #2c2416; --muted: #8b7e6a;
+    --accent: #5b3a29; --accent-light: #8b6914; --border: #e0d9cc;
+    --user-bg: #efe4d1; --code-bg: #f5f0e6; --radius: 12px;
+    --sidebar-w: 260px; --header-h: 52px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+    background:var(--bg); color:var(--text); height:100dvh; display:flex; overflow:hidden;
+  }
+
+  /* ── 侧边栏 ── */
+  .sidebar {
+    width:var(--sidebar-w); background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; flex-shrink:0;
+  }
+  .sidebar-header {
+    height:var(--header-h); padding:0 16px; display:flex; align-items:center; gap:8px;
+    border-bottom:1px solid var(--border); font-weight:600; font-size:.95rem;
+  }
+  .sidebar-header .logo { font-size:1.2rem; }
+  .new-chat-btn {
+    margin:10px 12px 0; padding:9px 0; border:1px dashed var(--border); border-radius:10px;
+    background:transparent; cursor:pointer; font-size:.88rem; color:var(--muted);
+    transition:all .2s; text-align:center;
+  }
+  .new-chat-btn:hover { border-color:var(--accent-light); color:var(--accent); background:#fdf8f0; }
+  .new-chat-btn.active { border-color:var(--accent); color:var(--accent); background:var(--user-bg); font-weight:500; }
+  .chat-list { flex:1; overflow-y:auto; padding:4px 8px; }
+  .chat-item {
+    padding:10px 12px; border-radius:8px; cursor:pointer; font-size:.85rem;
+    display:flex; align-items:center; gap:8px; transition:background .15s;
+    position:relative;
+  }
+  .chat-item:hover { background:var(--bg); }
+  .chat-item.active { background:#efe4d1; font-weight:500; }
+  .chat-item .ci-title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chat-item .ci-time { font-size:.72rem; color:var(--muted); flex-shrink:0; }
+  .chat-item .ci-del {
+    display:none; font-size:.8rem; color:var(--muted); cursor:pointer;
+    line-height:1; padding:2px 5px; border-radius:4px;
+  }
+  .chat-item:hover .ci-del { display:block; }
+  .chat-item .ci-del:hover { background:#fdd; color:#c33; }
+  .sidebar-footer { padding:8px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:4px; }
+  .sidebar-footer .new-chat-btn { margin:2px 4px; }
+
+  /* ── 主区域 ── */
+  .main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .header {
+    height:var(--header-h); padding:0 20px; display:flex; align-items:center; gap:10px;
+    background:var(--accent); color:#fff; flex-shrink:0;
+  }
+  .header h1 { font-size:1rem; font-weight:600; }
+  .header .sub { font-size:.72rem; opacity:.7; margin-left:auto; }
+
+  /* ── 聊天 ── */
+  .chat-container { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:14px; }
+  .chat-container.hidden { display:none; }
+  .message { display:flex; gap:10px; max-width:780px; width:100%; animation:fadeIn .25s; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .message.user { align-self:flex-end; flex-direction:row-reverse; }
+  .message.assistant { align-self:flex-start; }
+  .avatar { width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0; }
+  .message.user .avatar { background:#d4a853; }
+  .message.assistant .avatar { background:var(--accent);color:#fff; }
+  .bubble { padding:11px 16px; border-radius:var(--radius); line-height:1.65; font-size:.93rem; word-break:break-word; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .message.user .bubble { background:var(--user-bg); border-bottom-right-radius:4px; }
+  .message.assistant .bubble { background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
+  .bubble p { margin:6px 0; } .bubble p:first-child { margin-top:0; }
+  .bubble ul,.bubble ol { margin:6px 0; padding-left:20px; }
+  .bubble code { background:var(--code-bg); padding:1px 5px; border-radius:4px; font-size:.88em; }
+  .bubble pre { background:var(--code-bg); padding:12px; border-radius:8px; overflow-x:auto; margin:8px 0; font-size:.85em; }
+  .bubble pre code { background:none; padding:0; }
+  .bubble blockquote { border-left:3px solid var(--accent-light); padding-left:12px; margin:8px 0; color:var(--muted); }
+  .bubble strong { color:var(--accent); }
+  .bubble h3 { margin:10px 0 4px; font-size:1.02rem; }
+  .bubble table { border-collapse:collapse; margin:8px 0; width:100%; }
+  .bubble th,.bubble td { border:1px solid var(--border); padding:5px 9px; text-align:left; font-size:.88em; }
+  .bubble th { background:var(--code-bg); font-weight:600; }
+
+  /* ── 工作流指示器 ── */
+  .workflow-indicator {
+    display:flex; align-items:center; gap:8px; padding:8px 14px; margin:4px 0;
+    border-radius:8px; font-size:.86rem; animation:slideIn .2s;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+  .workflow-indicator.running { background:#e8f0fe; border-left:3px solid #4a90d9; color:#3a6fb5; }
+  .workflow-indicator.done { background:#e6f4ea; border-left:3px solid #34a853; color:#1e7e34; }
+  .workflow-indicator .wf-icon { font-size:1rem; flex-shrink:0; }
+  .wf-pulse { animation:wfPulse 1.5s infinite; }
+  @keyframes wfPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── 输入 ── */
+  .input-area { background:var(--surface); border-top:1px solid var(--border); padding:10px 20px; display:flex; gap:10px; flex-shrink:0; align-items:flex-end; }
+  .input-area textarea { flex:1; border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; font-size:.93rem; font-family:inherit; resize:none; max-height:120px; outline:none; background:var(--bg); line-height:1.5; }
+  .input-area textarea:focus { border-color:var(--accent-light); }
+  .input-area button { background:var(--accent); color:#fff; border:none; border-radius:var(--radius); padding:10px 20px; font-size:.93rem; cursor:pointer; flex-shrink:0; }
+  .input-area button:disabled { opacity:.5; cursor:not-allowed; }
+  .input-area.hidden { display:none; }
+
+  .welcome { text-align:center; padding:60px 20px; color:var(--muted); }
+  .welcome h2 { font-size:1.3rem; margin-bottom:8px; color:var(--accent); }
+  .welcome .hints { margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .welcome .hint { background:var(--surface); border:1px solid var(--border); padding:7px 14px; border-radius:20px; font-size:.84rem; cursor:pointer; transition:all .2s; }
+  .welcome .hint:hover { border-color:var(--accent-light); background:var(--user-bg); }
+
+  /* ── 知识图谱容器 ── */
+  .graph-container {
+    flex:1; display:none; position:relative; overflow:hidden; background:var(--bg);
+  }
+  .graph-container.visible { display:flex; }
+  .graph-container svg { width:100%; height:100%; }
+  .graph-container .graph-loading {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; color:var(--muted);
+  }
+
+  /* 图谱图例 */
+  .graph-legend {
+    position:absolute; bottom:20px; right:20px; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px;
+    font-size:.78rem; box-shadow:0 2px 8px rgba(0,0,0,.06); z-index:10;
+  }
+  .graph-legend .legend-item { display:flex; align-items:center; gap:8px; margin:3px 0; }
+  .graph-legend .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .graph-legend .legend-line { width:20px; height:2px; border-radius:1px; flex-shrink:0; }
+
+  /* 图谱详情面板 */
+  .graph-detail {
+    position:absolute; top:16px; left:16px; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px;
+    max-width:320px; max-height:calc(100% - 100px); overflow-y:auto;
+    box-shadow:0 4px 16px rgba(0,0,0,.08); z-index:10; display:none;
+  }
+  .graph-detail.visible { display:block; }
+  .graph-detail h3 { font-size:.95rem; margin-bottom:6px; color:var(--accent); }
+  .graph-detail .gd-meta { font-size:.8rem; color:var(--muted); margin-bottom:6px; }
+  .graph-detail .gd-tags { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+  .graph-detail .gd-tag { background:var(--code-bg); border-radius:4px; padding:2px 7px; font-size:.75rem; }
+  .graph-detail .gd-close {
+    float:right; cursor:pointer; font-size:1.1rem; line-height:1; color:var(--muted);
+    padding:2px 6px; border-radius:4px;
+  }
+  .graph-detail .gd-close:hover { background:#fdd; color:#c33; }
+  .graph-detail .gd-section { margin-top:8px; }
+  .graph-detail .gd-section h4 { font-size:.82rem; color:var(--accent-light); margin-bottom:4px; }
+  .graph-detail .gd-section ul { list-style:none; padding:0; }
+  .graph-detail .gd-section li { font-size:.8rem; padding:2px 0; color:var(--text); }
+  .graph-detail .gd-section li::before { content:'• '; color:var(--accent-light); }
+
+  /* 图谱控制按钮 */
+  .graph-controls {
+    position:absolute; top:16px; right:16px; display:flex; gap:6px; z-index:10;
+  }
+  .graph-controls button {
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:6px 12px; font-size:.78rem; cursor:pointer; transition:all .2s;
+    color:var(--text);
+  }
+  .graph-controls button:hover { background:var(--user-bg); border-color:var(--accent-light); }
+
+  /* ── 滚动条 ── */
+  .chat-container::-webkit-scrollbar,.chat-list::-webkit-scrollbar { width:5px; }
+  .chat-container::-webkit-scrollbar-thumb,.chat-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* ── Toast ── */
+  .toast { position:fixed; bottom:20px; right:20px; background:var(--accent); color:#fff; padding:10px 18px; border-radius:8px; font-size:.85rem; z-index:99; animation:fadeIn .25s; }
+
+  @media (max-width:700px) {
+    .sidebar { width:200px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<div class="sidebar">
+  <div class="sidebar-header"><span class="logo">🎓</span> SciFlow</div>
+  <button class="new-chat-btn" onclick="newChat()">＋ 新建对话</button>
+  <div class="chat-list" id="chatList"></div>
+  <div class="chat-list" id="knowledgePanel" style="display:none"></div>
+  <div class="sidebar-footer">
+    <button class="new-chat-btn" onclick="toggleKnowledge()">📚 知识库</button>
+    <button class="new-chat-btn" id="graphToggleBtn" onclick="toggleGraph()">🧠 知识图谱</button>
+  </div>
+</div>
+
+<!-- 主区域 -->
+<div class="main">
+  <div class="header">
+    <h1>SciFlow 智研协同 · 学术助手</h1>
+    <span class="sub" id="viewLabel">对话模式</span>
+  </div>
+
+  <!-- 聊天视图 -->
+  <div class="chat-container" id="chatContainer">
+    <div class="welcome" id="welcome">
+      <h2>👋 您好，我是 SciFlow 科研助手</h2>
+      <p>学术研究总指挥 — 调度文献检索、论文推荐、选题分析、写作辅助</p>
+      <div class="hints">
+        <span class="hint" onclick="pickHint(this)">📄 帮我分析Transformer架构</span>
+        <span class="hint" onclick="pickHint(this)">💡 NLP方向有什么研究热点</span>
+        <span class="hint" onclick="pickHint(this)">🔍 搜索最新的多模态大模型论文</span>
+        <span class="hint" onclick="pickHint(this)">📝 怎么写一篇论文的实验部分</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 知识图谱视图 -->
+  <div class="graph-container" id="graphContainer">
+    <div class="graph-loading" id="graphLoading">🧠 加载知识图谱中...</div>
+    <div class="graph-legend" id="graphLegend">
+      <div class="legend-item"><span class="legend-dot" style="background:#d4a853"></span> 论文</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#4a90d9"></span> 主题</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#34a853"></span> 方法</div>
+      <div class="legend-item"><span class="legend-line" style="background:#8b7e6a;border-top:2px dashed #8b7e6a;height:0"></span> 关联关系</div>
+    </div>
+    <div class="graph-detail" id="graphDetail"></div>
+    <div class="graph-controls">
+      <button onclick="resetGraphView()">🔄 重置视图</button>
+      <button onclick="autoLayoutGraph()">✨ 自动布局</button>
+    </div>
+  </div>
+
+  <!-- 输入区 -->
+  <div class="input-area" id="inputArea">
+    <textarea id="userInput" rows="1" placeholder="输入您的学术问题..." onkeydown="handleKey(event)"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">发送</button>
+  </div>
+</div>
+
+<script>
+// ─── 状态 ────────────────────────────────────────
+let currentSession = null;
+let messages = [];
+let isStreaming = false;
+let graphVisible = false;
+let graphData = null;
+let simulation = null;
+let gSvg = null;
+let gZoom = null;
+
+const chatContainer = document.getElementById('chatContainer');
+const graphContainer = document.getElementById('graphContainer');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const welcome = document.getElementById('welcome');
+const chatList = document.getElementById('chatList');
+const viewLabel = document.getElementById('viewLabel');
+const inputArea = document.getElementById('inputArea');
+
+// ─── 会话管理 ────────────────────────────────────
+async function loadSessions() {
+  const resp = await fetch('/api/sessions');
+  const sessions = await resp.json();
+  chatList.innerHTML = '';
+  sessions.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'chat-item' + (currentSession === s.id ? ' active' : '');
+    div.innerHTML = `<span class="ci-title">${s.title}</span><span class="ci-time">${s.updated}</span><span class="ci-del" onclick="event.stopPropagation();deleteChat('${s.id}')">×</span>`;
+    div.onclick = () => switchChat(s.id);
+    chatList.appendChild(div);
+  });
+  if (!sessions.length) {
+    chatList.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;font-size:.85rem">暂无对话</div>';
+  }
+}
+
+async function switchChat(sid) {
+  currentSession = sid;
+  messages = await loadMessages(sid);
+  renderAll();
+  loadSessions();
+}
+
+async function newChat() {
+  if (isStreaming) return;
+  const resp = await fetch('/api/sessions', { method: 'POST' });
+  const { id } = await resp.json();
+  await switchChat(id);
+}
+
+async function deleteChat(sid) {
+  if (!confirm('删除该对话？')) return;
+  await fetch('/api/sessions/' + sid, { method: 'DELETE' });
+  if (currentSession === sid) {
+    currentSession = null;
+    messages = [];
+    renderAll();
+  }
+  loadSessions();
+}
+
+async function saveMessages() {
+  if (!currentSession) return;
+  await fetch('/api/messages/' + currentSession, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages })
+  });
+}
+
+async function loadMessages(sid) {
+  try { const resp = await fetch('/api/messages/' + sid); return await resp.json(); }
+  catch { return []; }
+}
+
+// ─── 渲染 ────────────────────────────────────────
+function renderAll() {
+  chatContainer.innerHTML = '';
+  if (!messages.length) {
+    chatContainer.innerHTML = `<div class="welcome">
+      <h2>👋 新建对话</h2>
+      <p>学术研究总指挥 — 调度文献检索、论文推荐、选题分析、写作辅助</p>
+      <div class="hints">
+        <span class="hint" onclick="pickHintEl(this)">📄 帮我分析Transformer架构</span>
+        <span class="hint" onclick="pickHintEl(this)">💡 NLP方向有什么研究热点</span>
+        <span class="hint" onclick="pickHintEl(this)">🔍 搜索最新的多模态大模型论文</span>
+        <span class="hint" onclick="pickHintEl(this)">📝 怎么写一篇论文的实验部分</span>
+      </div>
+    </div>`;
+  } else {
+    messages.forEach(m => addMessageBubble(m.role, m.content, false));
+  }
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  text = text.replace(/^([🔄⏳✅❌⚠️])\s*\[工作流\]\s*(.+)$/gm, function(m, icon, msg) {
+    var cls = (icon === '✅' || icon === '❌' || icon === '⚠️') ? 'done' : 'running';
+    var pulse = cls === 'running' ? ' wf-pulse' : '';
+    return '<div class="workflow-indicator ' + cls + '"><span class="wf-icon' + pulse + '">' + icon + '</span> <span>' + msg + '</span></div>';
+  });
+  let html = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`{3}(\w*)\n?([\s\S]*?)`{3}/g, '<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\n### (.+)/g, '\n<h3>$1</h3>')
+    .replace(/\n#### (.+)/g, '\n<h4>$1</h4>')
+    .replace(/\n- (.+)/g, '\n<ul><li>$1</li></ul>')
+    .replace(/<\/ul>\n<ul>/g, '')
+    .replace(/\n\d+\. (.+)/g, '\n<ol><li>$1</li></ol>')
+    .replace(/<\/ol>\n<ol>/g, '')
+    .replace(/^> (.+)/gm, '<blockquote>$1</blockquote>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+  return '<p>' + html + '</p>';
+}
+
+function addMessageBubble(role, content, animate) {
+  if (role === 'user' && !content) return null;
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  div.innerHTML = `<div class="avatar">${role==='user'?'👤':'🎓'}</div><div class="bubble">${content ? renderMarkdown(content) : '<span class="wf-pulse">⏳ 思考中...</span>'}</div>`;
+  chatContainer.appendChild(div);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  return div;
+}
+
+// ─── 发送 ────────────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function pickHint(el) { userInput.value = el.textContent.trim(); sendMessage(); }
+function pickHintEl(el) { pickHint(el); }
+
+async function sendMessage() {
+  const text = userInput.value.trim();
+  if (!text || isStreaming) return;
+  if (!currentSession) { await newChat(); }
+
+  // 如果当前在图谱视图，先切回对话
+  if (graphVisible) toggleGraph();
+
+  isStreaming = true;
+  userInput.value = ''; userInput.style.height = 'auto'; sendBtn.disabled = true;
+
+  messages.push({ role: 'user', content: text });
+  addMessageBubble('user', text, true);
+  await saveMessages();
+
+  const assistDiv = addMessageBubble('assistant', '', true);
+  const bubble = assistDiv.querySelector('.bubble');
+  let full = '';
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, session_id: currentSession })
+    });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      for (const line of decoder.decode(value).split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const ds = line.slice(6);
+        if (ds === '[DONE]') continue;
+        try {
+          const p = JSON.parse(ds);
+          if (p.error) full = `❌ ${p.error}`;
+          else if (p.content) full += p.content;
+          bubble.innerHTML = renderMarkdown(full);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        } catch {}
+      }
+    }
+  } catch (e) {
+    bubble.innerHTML = `❌ 连接失败: ${e.message}`;
+  }
+
+  if (full) {
+    messages.push({ role: 'assistant', content: full });
+    await saveMessages();
+  }
+  await loadSessions();
+  isStreaming = false; sendBtn.disabled = false; userInput.focus();
+}
+
+// ─── 输入框自适应 ────────────────────────────────
+userInput.addEventListener('input', () => {
+  userInput.style.height = 'auto';
+  userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+});
+
+// ─── 初始加载 ────────────────────────────────────
+loadSessions();
+
+// ─── 知识库 ──────────────────────────────────────
+const knowledgePanel = document.getElementById('knowledgePanel');
+let kbOpen = false;
+
+async function toggleKnowledge() {
+  kbOpen = !kbOpen;
+  if (kbOpen) {
+    chatList.style.display = 'none';
+    knowledgePanel.style.display = 'block';
+    await loadKnowledge();
+  } else {
+    chatList.style.display = 'block';
+    knowledgePanel.style.display = 'none';
+  }
+}
+
+async function loadKnowledge() {
+  knowledgePanel.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">加载中...</div>';
+  try {
+    const r = await fetch('/api/knowledge');
+    const files = await r.json();
+    if (!files.length) {
+      knowledgePanel.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;font-size:.85rem">知识库为空</div>';
+      return;
+    }
+    knowledgePanel.innerHTML = files.map(f =>
+      `<div class="chat-item" onclick="viewKnowledge('${f.path}')" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <span class="ci-title" style="font-weight:500">${f.name}</span>
+        <span style="font-size:.7rem;color:var(--muted)">${f.updated} · ${(f.size/1024).toFixed(1)}KB</span>
+      </div>`
+    ).join('');
+  } catch { knowledgePanel.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">加载失败</div>'; }
+}
+
+async function viewKnowledge(fname) {
+  try {
+    const r = await fetch('/api/knowledge/' + fname);
+    const d = await r.json();
+    const bubble = document.createElement('div');
+    bubble.className = 'message assistant';
+    bubble.innerHTML = `<div class="avatar">📚</div><div class="bubble">${renderMarkdown(d.content)}</div>`;
+    chatContainer.appendChild(bubble);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    toggleKnowledge();
+  } catch {}
+}
+
+// ═══════════════════════════════════════════════════
+// ─── 知识图谱 ─────────────────────────────────────
+// ═══════════════════════════════════════════════════
+
+const graphLoading = document.getElementById('graphLoading');
+const graphDetail = document.getElementById('graphDetail');
+
+function toggleGraph() {
+  graphVisible = !graphVisible;
+  const btn = document.getElementById('graphToggleBtn');
+
+  if (graphVisible) {
+    chatContainer.classList.add('hidden');
+    inputArea.classList.add('hidden');
+    graphContainer.classList.add('visible');
+    viewLabel.textContent = '🧠 知识图谱';
+    btn.classList.add('active');
+    btn.textContent = '💬 返回对话';
+    loadGraph();
+  } else {
+    chatContainer.classList.remove('hidden');
+    inputArea.classList.remove('hidden');
+    graphContainer.classList.remove('visible');
+    graphDetail.classList.remove('visible');
+    viewLabel.textContent = '对话模式';
+    btn.classList.remove('active');
+    btn.textContent = '🧠 知识图谱';
+  }
+}
+
+async function loadGraph() {
+  if (graphData) {
+    renderGraph();
+    return;
+  }
+
+  graphLoading.style.display = 'flex';
+  try {
+    const resp = await fetch('/api/knowledge-graph');
+    graphData = await resp.json();
+    graphLoading.style.display = 'none';
+    renderGraph();
+  } catch (e) {
+    graphLoading.textContent = '❌ 加载失败: ' + e.message;
+  }
+}
+
+function renderGraph() {
+  const { nodes, edges } = graphData;
+  if (!nodes.length) {
+    graphLoading.textContent = '📭 知识库为空，暂无图谱数据';
+    graphLoading.style.display = 'flex';
+    return;
+  }
+
+  // 清理旧图
+  d3.select('#graphContainer svg').remove();
+  graphDetail.classList.remove('visible');
+
+  const container = graphContainer;
+  const width = container.clientWidth || 900;
+  const height = container.clientHeight || 600;
+
+  const svg = d3.select('#graphContainer')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
+  gSvg = svg;
+
+  // 缩放
+  gZoom = d3.zoom()
+    .scaleExtent([0.2, 4])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    });
+  svg.call(gZoom);
+
+  const g = svg.append('g');
+
+  // 颜色映射
+  const colorMap = {
+    'paper': '#d4a853',
+    'topic': '#4a90d9',
+    'method': '#34a853'
+  };
+
+  // 节点大小
+  const radiusMap = {
+    'paper': 22,
+    'topic': 14,
+    'method': 12
+  };
+
+  // 力模拟
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(edges).id(d => d.id).distance(d => {
+      if (d.relation === 'related') return 80;
+      return 60;
+    }))
+    .force('charge', d3.forceManyBody().strength(d => {
+      if (d.type === 'paper') return -400;
+      return -200;
+    }))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => (radiusMap[d.type] || 15) + 6));
+
+  // 连边（要先于节点绘制让连线在底层）
+  const linkGroup = g.append('g').attr('class', 'links');
+  const link = linkGroup.selectAll('line')
+    .data(edges)
+    .join('line')
+    .attr('stroke', d => d.relation === 'related' ? '#bbb' : '#8b7e6a')
+    .attr('stroke-width', d => d.relation === 'related' ? 1 : 1.5)
+    .attr('stroke-dasharray', d => d.relation === 'related' ? '4,3' : 'none')
+    .attr('stroke-opacity', 0.6);
+
+  // 节点组
+  const nodeGroup = g.append('g').attr('class', 'nodes');
+  const node = nodeGroup.selectAll('g')
+    .data(nodes)
+    .join('g')
+    .attr('cursor', d => d.type === 'paper' ? 'pointer' : 'default')
+    .call(d3.drag()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', (event, d) => {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on('end', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      })
+    );
+
+  // 节点圆形
+  node.append('circle')
+    .attr('r', d => radiusMap[d.type] || 15)
+    .attr('fill', d => colorMap[d.type] || '#999')
+    .attr('stroke', d => d.type === 'paper' ? '#b8923f' : '#fff')
+    .attr('stroke-width', d => d.type === 'paper' ? 2.5 : 1.5)
+    .attr('opacity', 0.92)
+    .style('filter', d => d.type === 'paper' ? 'drop-shadow(0 1px 2px rgba(0,0,0,.15))' : 'none');
+
+  // 论文节点：加内部图标
+  node.filter(d => d.type === 'paper')
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .attr('font-size', '12px')
+    .text('📄');
+
+  // 节点标签
+  node.append('text')
+    .attr('dy', d => (radiusMap[d.type] || 15) + 14)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', d => d.type === 'paper' ? '11px' : '10px')
+    .attr('fill', '#2c2416')
+    .attr('font-weight', d => d.type === 'paper' ? '600' : '400')
+    .style('text-shadow', '0 0 3px #fff, 0 0 3px #fff')
+    .text(d => d.label);
+
+  // 点击事件
+  node.on('click', (event, d) => {
+    event.stopPropagation();
+    if (d.type === 'paper') showPaperDetail(d);
+    else {
+      // 主题/方法 → 高亮关联论文
+      highlightRelated(d.id);
+    }
+  });
+
+  // 空白区域点击关闭详情
+  svg.on('click', () => {
+    graphDetail.classList.remove('visible');
+  });
+
+  // 力模拟更新
+  simulation.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  // 热度标签：停靠3秒后自动缩小
+  setTimeout(() => {
+    simulation.alphaTarget(0).restart();
+  }, 3000);
+}
+
+// ─── 显示论文详情 ────────────────────────────────
+function showPaperDetail(d) {
+  graphDetail.innerHTML = `
+    <span class="gd-close" onclick="d3.select('#graphDetail').classList.remove('visible')">×</span>
+    <h3>${d.title || d.label}</h3>
+    <div class="gd-meta">📄 论文</div>
+    ${d.summary ? `<div class="gd-meta">${d.summary}</div>` : ''}
+    ${d.tags && d.tags.length ? `<div class="gd-section"><h4>标签</h4><div class="gd-tags">${d.tags.map(t => `<span class="gd-tag">${t}</span>`).join('')}</div></div>` : ''}
+    ${d.topics && d.topics.length ? `<div class="gd-section"><h4>📂 相关主题</h4><ul>${d.topics.map(t => `<li>${t}</li>`).join('')}</ul></div>` : ''}
+    ${d.methods && d.methods.length ? `<div class="gd-section"><h4>🔧 使用方法</h4><ul>${d.methods.map(m => `<li>${m}</li>`).join('')}</ul></div>` : ''}
+  `;
+  graphDetail.classList.add('visible');
+}
+
+// ─── 高亮关联节点 ────────────────────────────────
+function highlightRelated(nodeId) {
+  const svg = gSvg;
+  const relatedIds = new Set([nodeId]);
+  graphData.edges.forEach(e => {
+    const sid = typeof e.source === 'object' ? e.source.id : e.source;
+    const tid = typeof e.target === 'object' ? e.target.id : e.target;
+    if (sid === nodeId) relatedIds.add(tid);
+    if (tid === nodeId) relatedIds.add(sid);
+  });
+
+  svg.selectAll('.nodes g')
+    .transition().duration(300)
+    .attr('opacity', d => relatedIds.has(d.id) ? 1 : 0.15);
+
+  svg.selectAll('.links line')
+    .transition().duration(300)
+    .attr('stroke-opacity', d => {
+      const sid = typeof d.source === 'object' ? d.source.id : d.source;
+      const tid = typeof d.target === 'object' ? d.target.id : d.target;
+      return (relatedIds.has(sid) && relatedIds.has(tid)) ? 0.6 : 0.05;
+    });
+
+  // 3秒后恢复
+  setTimeout(() => {
+    svg.selectAll('.nodes g').transition().duration(300).attr('opacity', 1);
+    svg.selectAll('.links line').transition().duration(300).attr('stroke-opacity', 0.6);
+  }, 3000);
+}
+
+// ─── 图表控制 ────────────────────────────────────
+function resetGraphView() {
+  if (!gSvg || !gZoom) return;
+  gSvg.transition().duration(500).call(gZoom.transform, d3.zoomIdentity);
+  graphDetail.classList.remove('visible');
+  // 恢复透明度
+  gSvg.selectAll('.nodes g').attr('opacity', 1);
+  gSvg.selectAll('.links line').attr('stroke-opacity', 0.6);
+}
+
+function autoLayoutGraph() {
+  if (!simulation) return;
+  // 释放所有固定位置
+  graphData.nodes.forEach(n => { n.fx = null; n.fy = null; });
+  simulation.alpha(0.5).restart();
+  graphDetail.classList.remove('visible');
+}
+
+// ─── 窗口缩放适应 ────────────────────────────────
+window.addEventListener('resize', () => {
+  if (!graphVisible || !graphData) return;
+  const container = graphContainer;
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w > 0 && h > 0 && gSvg) {
+    gSvg.attr('width', w).attr('height', h);
+    if (simulation) {
+      simulation.force('center', d3.forceCenter(w / 2, h / 2));
+      simulation.alpha(0.1).restart();
+    }
+  }
+});
+</script>
+</body>
+</html>

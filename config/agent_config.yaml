@@ -1,0 +1,53 @@
+# Agent 配置
+agents:
+  main:
+    name: main_agent
+    model: deepseek/deepseek-v4-pro
+    description: 主Agent - 用户交互入口与全局调度
+
+  reading_orchestrator:
+    name: reading_orchestrator
+    model: deepseek/deepseek-v4-flash
+    description: 阅读编排器 - 管理搜索→略读→精读→分析→关联管线
+    max_retries: 3
+
+  search:
+    name: search_agent
+    model: deepseek/deepseek-v4-flash
+    description: 搜索Agent - 检索学术论文
+    sources: [arxiv, semantic_scholar, google_scholar]
+    max_results: 20
+
+  skim:
+    name: skim_agent
+    model: deepseek/deepseek-v4-flash
+    description: 略读Agent - 筛选有价值的论文
+    relevance_threshold: 0.6
+
+  deep_read:
+    name: deep_read_agent
+    model: deepseek/deepseek-v4-pro
+    description: 精读Agent - 深度解析论文（多实例并发）
+    max_concurrent: 5
+
+  analysis:
+    name: analysis_agent
+    model: deepseek/deepseek-v4-pro
+    description: 分析Agent - 综合精读结果做分析总结
+
+  association:
+    name: association_agent
+    model: deepseek/deepseek-v4-flash
+    description: 关联Agent - 将精读结果结构化入库
+
+  recommender:
+    name: personalized_recommender
+    model: deepseek/deepseek-v4-flash
+    description: 个性化推荐Agent - 基于用户画像推荐论文
+    top_k: 10
+    diversity_weight: 0.3
+
+  writer:
+    name: writing_agent
+    model: deepseek/deepseek-v4-pro
+    description: 写作Agent - 基于实验数据撰写论文

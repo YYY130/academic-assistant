@@ -1,0 +1,5 @@
+method,dataset,mIoU,Dice,FPS
+Baseline U-Net,COCO,72.3,0.85,45
+Baseline U-Net,Cityscapes,68.1,0.79,42
+Ours (U-Net+Attention),COCO,78.5,0.91,32
+Ours (U-Net+Attention),Cityscapes,75.2,0.87,30
