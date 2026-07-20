@@ -144,6 +144,16 @@ The script will:
    openclaw gateway restart
    ```
 
+### Run Web Frontend (WSL)
+
+```bash
+cd /mnt/c/Users/yuyue/Desktop/作业之类的/龙虾实训/结项作业/academic-assistant
+python3 web/server.py
+```
+
+> Make sure OpenClaw gateway is running first (`openclaw gateway restart`).
+> The web interface connects to the gateway on port `18789`.
+
 ### Usage Examples
 
 ```
