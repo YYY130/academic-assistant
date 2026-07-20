@@ -5,12 +5,12 @@
 ## 🧠 架构总览
 
 ```
-用户 (博士)
+用户
    │
    ▼
 ┌─────────────────────────────────────────────┐
-│           主 Agent · 可露希尔                  │
-│   俏皮总工程师 · 学术助手总调度                │
+│           主 Agent                          │
+│   学术助手总调度                            │
 │   model: deepseek/deepseek-v4-pro            │
 └──────┬──────────────────────┬───────────────┘
        │                      │
@@ -55,7 +55,7 @@
 
 | Agent | 身份 | 模型 | 核心能力 |
 |-------|------|------|---------|
-| **main_agent** | 可露希尔·学术版 | Pro | 用户交互、意图识别、全局调度 |
+| **main_agent** | 学术研究助手 | Pro | 用户交互、意图识别、全局调度 |
 | **reading_orchestrator** | 阅读编排器 | Flash | 管线调度、并发控制、质量审查 |
 | **search_agent** | 搜索Agent侦察兵 | Flash | 多渠道论文搜索（arXiv/S2/Web） |
 | **skim_agent** | 略读Agent过滤器 | Flash | 快速筛选、相关性评估 |
@@ -132,7 +132,7 @@ python shared/scripts/store_to_db_a.py --action list
 ```
 academic-assistant/
 ├── agents-workspace/          # 9个AI智能体的工作区
-│   ├── main_agent/            # 主Agent · 可露希尔
+│   ├── main_agent/            # 主Agent
 │   ├── reading_orchestrator/  # 阅读编排器
 │   ├── search_agent/          # 搜索Agent
 │   ├── skim_agent/            # 略读Agent
