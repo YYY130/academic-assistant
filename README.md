@@ -1,184 +1,183 @@
-# 🧪 Academic Assistant — OpenClaw Multi-Agent System
+# 🧪 Academic Assistant — OpenClaw 多智能体学术助手
 
-> *A full-stack academic research assistant powered by 9 collaborative AI agents. Search papers → recommend readings → generate reports — all handled by autonomous agents.*
+> *9 个 AI 智能体协作完成论文搜索、推荐与写作的完整学术研究助手。*
 
 ---
 
-## ✨ Features
+## ✨ 功能特性
 
-- **Multi-Agent Pipeline** — 9 specialized AI agents collaborating on a shared goal
-- **Paper Discovery & Analysis** — Search arXiv/Semantic Scholar, skim, deep-read, and analyze papers
-- **Personalized Recommendation** — Agent that learns your research interests over time
-- **Academic Writing** — Generate draft papers from experimental data
-- **Dual Database** — Persistent vector knowledge base (DB A) + ephemeral experiment storage (DB B)
-- **Parallel Processing** — Multiple papers analyzed concurrently via agent spawning
+- **多智能体流水线** — 9 个专用 AI 智能体分工协作
+- **论文发现与分析** — 搜索 arXiv/Semantic Scholar，快速筛选、深度阅读、综合分析
+- **个性化推荐** — 智能体学习你的研究兴趣，持续推荐相关论文
+- **学术写作** — 基于实验数据自动生成论文草稿
+- **双数据库** — 持久化向量知识库（DB A）+ 临时实验数据存储（DB B）
+- **并行处理** — 多篇论文同时分析，互不阻塞
 
-## 🧠 System Architecture
+## 🧠 系统架构
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   User Interface                     │
+│                    用户界面                          │
 │          (WebChat / Discord / Telegram / CLI)        │
 └─────────────────────────┬───────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────┐
-│                   Main Agent                         │
-│          Intent recognition · Task dispatch          │
+│                    主 Agent                          │
+│          意图识别 · 任务调度 · 用户交互                │
 │                  model: Pro                          │
 └──────┬─────────────────────┬────────────────────────┘
        │                     │
        ▼                     ▼
 ┌──────────────┐   ┌───────────────┐   ┌────────────┐
-│   Reading    │   │ Personalized  │   │  Writing   │
-│ Orchestrator │   │ Recommender   │   │   Agent    │
-│ Pipeline mgr │   │ Interest-based│   │ Data→Paper │
-│ model: Flash │   │ model: Flash  │   │ model: Pro │
+│   阅读编排器   │   │  个性化推荐    │   │   写作Agent │
+│   管线调度     │   │  兴趣推荐      │   │  数据→论文  │
+│ model: Flash  │   │ model: Flash  │   │ model: Pro │
 └──────┬───────┘   └───────┬───────┘   └─────┬──────┘
        │                    │                 │
        ▼                    ▼                 ▼
   ┌──────────┐       ┌────────┐       ┌────────┐
-  │ Search   │       │  DB A  │       │  DB B  │
-  │   Agent  │       │ Vector │       │  Exp.  │
-  │ Flash    │       │  K.B.  │       │  Data  │
-  └────┬─────┘       │(persist)│      │(ephem) │
-       ▼             └────────┘       └────────┘
+  │ 搜索Agent │       │  DB A  │       │  DB B  │
+  │  论文搜索  │       │ 向量知识库│       │ 实验数据 │
+  │ Flash    │       │ (持久化) │       │ (临时)  │
+  └────┬─────┘       └────────┘       └────────┘
+       ▼
   ┌──────────┐
-  │  Skim    │
-  │  Agent   │
-  │  Filter  │
+  │ 略读Agent │
+  │  快速筛选  │
+  │ Flash    │
   └────┬─────┘
        ▼
   ┌──────────┐
-  │  Deep    │← parallel instances
-  │  Reader  │
+  │ 精读Agent │← 可并行多个实例
+  │  深度阅读  │
   │  Flash   │
   └────┬─────┘
        │
    ┌───┴────────┐
    ▼            ▼
 ┌────────┐ ┌──────────┐
-│Analyst │ │Associator│
-│Combine │ │ Store KB │
+│分析Agent│ │ 关联Agent │
+│综合分析  │ │ 入库归档   │
 │Flash   │ │ Flash    │
 └────┬───┘ └────┬─────┘
      │          │
-     └──→ Orchestrator → Main Agent → User
+     └──→ 编排器汇总 → 主Agent → 用户
 ```
 
-## 🤖 Agent Overview
+## 🤖 智能体一览
 
-| Agent | Role | Model | Responsibility |
-|-------|------|-------|---------------|
-| **main_agent** | Research Assistant | Pro | Intent recognition, task dispatch, user interaction |
-| **reading_orchestrator** | Pipeline Manager | Flash | Orchestrate multi-stage reading pipeline, concurrency |
-| **search_agent** | Scout | Flash | Multi-source paper search (arXiv, S2, Web) |
-| **skim_agent** | Filter | Flash | Quick relevance assessment, paper triage |
-| **deep_read_agent** | Deep Reader | Flash | Full-text analysis, structured note-taking |
-| **analysis_agent** | Analyst | Flash | Cross-paper synthesis, insight extraction |
-| **association_agent** | Archivist | Flash | Structured ingestion into vector KB (DB A) |
-| **personalized_recommender** | Curator | Flash | Interest profile × knowledge base → recommendations |
-| **writing_agent** | Writer | Pro | Data-driven academic paper generation |
+| Agent | 角色 | 模型 | 职责 |
+|-------|------|-------|------|
+| **main_agent** | 学术研究助手 | Pro | 意图识别、任务调度、用户交互 |
+| **reading_orchestrator** | 阅读编排器 | Flash | 多阶段阅读管线调度、并发控制 |
+| **search_agent** | 搜索 Agent | Flash | 多源论文搜索（arXiv, S2, Web） |
+| **skim_agent** | 略读 Agent | Flash | 快速评估相关性、论文筛选 |
+| **deep_read_agent** | 精读 Agent | Flash | 全文深度分析、结构化笔记 |
+| **analysis_agent** | 分析 Agent | Flash | 跨论文综合、洞察提取 |
+| **association_agent** | 关联 Agent | Flash | 结构化入库向量知识库（DB A） |
+| **personalized_recommender** | 个性化推荐 Agent | Flash | 兴趣画像 × 知识库 → 推荐 |
+| **writing_agent** | 写作 Agent | Pro | 数据驱动的学术论文生成 |
 
-## 🗄️ Dual Database Design
+## 🗄️ 双数据库设计
 
-| Dimension | DB A (Vector KB) | DB B (Experiment Data) |
-|-----------|------------------|----------------------|
-| **Content** | Paper knowledge, relationships | Experiment data, analysis results |
-| **Lifetime** | Cross-task, persistent | Per-task, ephemeral |
-| **Accessed by** | Main Agent, Recommender, Associator | Writing Agent |
-| **Index** | all-MiniLM-L6-v2 (local embeddings) | Structured file storage |
-| **Path** | `shared/db_a/` | `shared/db_b/` |
+| 维度 | DB A（向量知识库） | DB B（实验数据库） |
+|------|-------------------|-------------------|
+| **存储内容** | 论文知识、关联关系 | 实验数据、分析结果 |
+| **生命周期** | 跨任务、持久化 | 单次任务、用完即弃 |
+| **访问者** | 主 Agent、推荐 Agent、关联 Agent | 写作 Agent |
+| **索引方式** | all-MiniLM-L6-v2（本地嵌入） | 结构化文件存储 |
+| **路径** | `shared/db_a/` | `shared/db_b/` |
 
-## 📡 Agent Communication
+## 📡 智能体通信
 
-Built on OpenClaw's native tools:
+基于 OpenClaw 内置工具：
 
-| Tool | Purpose |
-|------|---------|
-| `sessions_spawn` | Create child agents for subtasks |
-| `sessions_send` | Cross-agent messaging |
-| `sessions_history` | Retrieve child agent results |
-| `memory_search` | Cross-session memory retrieval |
+| 工具 | 用途 |
+|------|------|
+| `sessions_spawn` | 创建子 Agent 执行子任务 |
+| `sessions_send` | 跨 Agent 消息传递 |
+| `sessions_history` | 查看子 Agent 执行结果 |
+| `memory_search` | 跨会话记忆搜索 |
 
-### Reading Pipeline Flow
+### 阅读管线流程
 
 ```
 main_agent
   └─ spawn → reading_orchestrator
        ├─ spawn → search_agent
        ├─ spawn → skim_agent
-       ├─ spawn → deep_read_agent (×N parallel)
-       ├─ spawn → analysis_agent (parallel)
-       └─ spawn → association_agent (parallel)
-       └─ results consolidated → orchestrator → main_agent → user
+       ├─ spawn → deep_read_agent (×N 并行)
+       ├─ spawn → analysis_agent (并行)
+       └─ spawn → association_agent (并行)
+       └─ 结果汇总 → 编排器 → main_agent → 用户
 ```
 
-## 🚀 Getting Started
+## 🚀 快速开始
 
-### Prerequisites
+### 环境要求
 
-- [OpenClaw](https://github.com/openclaw/openclaw) installed and running
-- API keys for configured LLM providers (DeepSeek recommended)
+- 已安装 [OpenClaw](https://github.com/openclaw/openclaw)
+- 已配置 LLM 供应商 API Key（推荐 DeepSeek）
 
-### One-Click Setup
+### 一键配置
 
 ```bash
 python setup.py
 ```
 
-The script will:
-- Locate your OpenClaw configuration
-- Merge the 9 agent definitions into `openclaw.json`
-- Create required data directories
-- Back up your existing config
+脚本会自动：
+- 查找你的 OpenClaw 配置文件
+- 合并 9 个 Agent 定义到 `openclaw.json`
+- 创建必要的数据目录
+- 备份原有配置
 
-> Use `python setup.py --dry-run` to preview changes first.
-> Use `python setup.py --path /your/project/path` for custom locations.
+> 使用 `python setup.py --dry-run` 可预览变更内容。
+> 使用 `python setup.py --path /your/project/path` 指定项目路径。
 
-### Manual Installation
+### 手动安装
 
-1. Merge `config/openclaw.agents.json` into your OpenClaw configuration
-2. Restart the gateway:
+1. 将 `config/openclaw.agents.json` 合并到你的 OpenClaw 配置中
+2. 重启网关：
    ```bash
    openclaw gateway restart
    ```
 
-### Run Web Frontend (WSL)
+### 启动 Web 前端（WSL）
 
 ```bash
 cd /mnt/c/Users/yuyue/Desktop/作业之类的/龙虾实训/结项作业/academic-assistant
 python3 web/server.py
 ```
 
-> Make sure OpenClaw gateway is running first (`openclaw gateway restart`).
-> The web interface connects to the gateway on port `18789`.
-> Open **http://localhost:5000/** in your browser after starting.
+> 请先确保 OpenClaw 网关已启动（`openclaw gateway restart`）。
+> Web 前端通过网关端口 `18789` 连接。
+> 启动后在浏览器打开 **http://localhost:5000/** 即可访问。
 
-### Usage Examples
+### 使用示例
 
 ```
-User: "Find me the latest papers on transformer attention mechanisms"
-  → Pipeline dispatches automatically → returns reading report
+用户: "帮我查一下 transformer 注意力机制的最新论文"
+  → 自动调度阅读管线 → 返回阅读报告
 
-User: "Recommend some NLP papers"
-  → Recommender queries KB → returns curated list
+用户: "推荐几篇 NLP 方向的论文"
+  → 推荐 Agent 查知识库 → 返回推荐列表
 
-User: "Write a paper based on experiment data"
-  → Writing Agent queries DB B → returns draft
+用户: "根据实验数据写一篇论文"
+  → 写作 Agent 查 DB B → 返回论文草稿
 ```
 
-### Quick Test
+### 快速测试
 
 ```bash
 python shared/scripts/store_to_db_a.py --action list
 ```
 
-## 📁 Project Structure
+## 📁 项目结构
 
 ```
 academic-assistant/
-├── agents-workspace/           # Runtime workspace for 9 agents
+├── agents-workspace/           # 9 个智能体的运行工作区
 │   ├── main_agent/
 │   ├── reading_orchestrator/
 │   ├── search_agent/
@@ -189,38 +188,32 @@ academic-assistant/
 │   ├── personalized_recommender/
 │   └── writing_agent/
 ├── shared/
-│   ├── db_a/                   # Vector knowledge base
-│   ├── db_b/                   # Experiment data store
-│   └── scripts/                # Shared agent utilities
+│   ├── db_a/                   # 向量知识库
+│   ├── db_b/                   # 实验数据存储
+│   └── scripts/                # 共享工具脚本
 ├── config/
-│   ├── openclaw.agents.json    # Agent configuration
-│   ├── agent_config.yaml       # Agent parameters
-│   ├── database.yaml           # Database settings
-│   └── default.yaml            # Default config
-├── docs/                       # Documentation
-├── experiment/                 # Sample experiment data
-├── references/                 # Reference papers
-└── web/                        # Web interface
+│   ├── openclaw.agents.json    # Agent 配置
+│   ├── agent_config.yaml       # Agent 参数
+│   ├── database.yaml           # 数据库设置
+│   └── default.yaml            # 默认配置
+├── docs/                       # 文档
+├── experiment/                 # 样例实验数据
+├── references/                 # 参考文献
+└── web/                        # Web 界面
 ```
 
-## 💡 Design Philosophy
+## 💡 设计理念
 
-1. **Real AI Agents** — Each agent is a genuine LLM-powered entity on the OpenClaw platform, not a scripted simulation
-2. **Spawn-based Parallelism** — Main agent spawns child agents on demand, enabling concurrent paper analysis
-3. **Memory-Aware** — Core agents (main, recommender, writer) maintain persistent memory; pipeline agents are stateless per task
-4. **Data Separation** — Knowledge assets (DB A) and process data (DB B) have distinct lifecycles for efficient storage management
-5. **Minimal Dependencies** — Only requires OpenClaw runtime + configured LLM providers; no additional infrastructure
+1. **真正的 AI 智能体** — 每个 Agent 都是 OpenClaw 平台上真实的 LLM 实体，不是脚本模拟
+2. **Spawn 并行模式** — 主 Agent 按需创建子 Agent，天然支持并发论文分析
+3. **记忆分层** — 核心 Agent（主、推荐、写作）有持久记忆；管线 Agent 每次任务不保留历史
+4. **数据分离** — 知识沉淀（DB A）与过程数据（DB B）生命周期不同，管理更高效
+5. **最小依赖** — 仅需 OpenClaw 运行环境 + 配置好的 LLM 供应商，无需额外基础设施
 
----
+## 📦 技术栈
 
-## 📦 Tech Stack
-
-- **Platform:** [OpenClaw](https://github.com/openclaw/openclaw)
-- **LLMs:** DeepSeek V4 Pro / Flash
-- **Embeddings:** all-MiniLM-L6-v2 (local)
-- **Storage:** File-based vector KB, structured files
-- **Interface:** WebChat, Discord, Telegram, CLI
-
----
-
-*Built with OpenClaw — an open-source agent framework.*
+- **平台:** [OpenClaw](https://github.com/openclaw/openclaw)
+- **大模型:** DeepSeek V4 Pro / Flash
+- **嵌入模型:** all-MiniLM-L6-v2（本地）
+- **存储:** 文件型向量知识库、结构化文件
+- **界面:** WebChat / Discord / Telegram / Web 前端
