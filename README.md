@@ -121,7 +121,22 @@ main_agent
 - [OpenClaw](https://github.com/openclaw/openclaw) installed and running
 - API keys for configured LLM providers (DeepSeek recommended)
 
-### Installation
+### One-Click Setup
+
+```bash
+python setup.py
+```
+
+The script will:
+- Locate your OpenClaw configuration
+- Merge the 9 agent definitions into `openclaw.json`
+- Create required data directories
+- Back up your existing config
+
+> Use `python setup.py --dry-run` to preview changes first.
+> Use `python setup.py --path /your/project/path` for custom locations.
+
+### Manual Installation
 
 1. Merge `config/openclaw.agents.json` into your OpenClaw configuration
 2. Restart the gateway:
